@@ -25,7 +25,7 @@ jobs:
         run: |
           go generate ./...
           go test ./...
-          go build -o sockscope-collector .
+          go build -trimpath -o sockscope-collector .
       - run: packaging/build.sh "${GITHUB_REF_NAME#v}"
       - run: gh release create "$GITHUB_REF_NAME" dist/* --title "sockscope $GITHUB_REF_NAME" --generate-notes
         env:

@@ -16,6 +16,7 @@ jpackage --type deb --dest dist \
     --module-path app/build/install/sockscope/lib --module sockscope/sockscope.App \
     --icon packaging/sockscope.png \
     --linux-package-name sockscope-viewer --linux-shortcut \
+    --linux-deb-maintainer 270933868+himi9046-hub@users.noreply.github.com \
     --linux-menu-group Network --linux-app-category net \
     --linux-package-deps sockscope-collector
 ls -la dist

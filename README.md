@@ -79,7 +79,7 @@ From source:
 ```
 cd collector
 go generate ./...
-go build -o sockscope-collector .
+go build -trimpath -o sockscope-collector .
 
 cd ../app
 ./gradlew installDist
