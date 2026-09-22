@@ -3,15 +3,20 @@
 Live network traffic per process on Linux, counted in the kernel with eBPF.
 
 A small collector attaches to the kernel's TCP and UDP send and receive paths
-and adds up bytes per process. A JavaFX window shows who is downloading and
-uploading right now, with totals.
+and adds up bytes per process. It also reports every TCP connection as it opens
+and closes. A JavaFX window shows who is downloading and uploading right now,
+a one-minute graph, and the connections of the program you pick.
 
 ## How it works
 
 - kprobes on `tcp_sendmsg`, `tcp_cleanup_rbuf`, `udp_sendmsg`, `udp_recvmsg`
   and their IPv6 versions count bytes per process in a BPF hash map.
-- Only counters and process metadata are collected. Packet contents are never
-  read.
+- The `sock:inet_sock_set_state` tracepoint reports TCP connections opening and
+  closing, with addresses, ports, duration and bytes. Incoming connections are
+  credited to the process that called `accept()`, found with a kretprobe on
+  `inet_csk_accept`.
+- Only counters, addresses and process metadata are collected. Packet contents
+  are never read.
 - The collector reads the map once a second and publishes one JSON line per
   sample, either to stdout or to a Unix socket.
 - The viewer is a separate process and runs as a normal user. Only the
@@ -23,6 +28,11 @@ uploading right now, with totals.
 
 `tx` and `rx` are bytes in the last interval, the totals are since the
 collector started. `cgroup` is the cgroup id, which tells containers apart.
+Connections arrive as separate lines:
+
+```json
+{"t":1790091275,"conn":{"kind":"close","dir":"in","pid":16649,"comm":"python3","cgroup":21,"local":"127.0.0.1","lport":18095,"remote":"127.0.0.1","rport":54916,"ms":2,"rx":84,"tx":300205}}
+```
 
 ## Requirements
 
@@ -67,10 +77,18 @@ The socket is readable by root and the given group. The viewer looks for
 `/run/sockscope.sock` unless `SOCKSCOPE_SOCKET` points somewhere else, and
 reconnects if the collector restarts.
 
+## Limits
+
+- Upload is counted when a program hands data to the kernel. A program that
+  writes a large buffer in one call shows up as a burst, then as idle while the
+  kernel sends it. Totals are exact.
+- Download is counted when the program reads the data, so it is smooth.
+- Only TCP connections are listed. UDP traffic is counted but has no connection
+  to show.
+
 ## Next
 
-- Connection view: open and closed connections with remote host, port and
-  duration, from the `sock:inet_sock_set_state` tracepoint.
+- Host names for remote addresses.
 - TCP retransmits per process.
 - Container and pod names instead of cgroup ids.
 - `.deb` and `.rpm` packages with a systemd unit for the collector.
