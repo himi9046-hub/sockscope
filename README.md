@@ -36,6 +36,29 @@ Connections arrive as separate lines:
 {"t":1790091275,"conn":{"kind":"close","dir":"in","pid":16649,"comm":"python3","cgroup":21,"local":"127.0.0.1","lport":18095,"remote":"127.0.0.1","rport":54916,"ms":2,"rx":84,"tx":300205}}
 ```
 
+## Install
+
+Packages for Debian, Ubuntu and Fedora are on the
+[releases page](https://github.com/himi9046-hub/sockscope/releases).
+
+```
+sudo apt install ./sockscope-collector_*_amd64.deb ./sockscope-viewer_*_amd64.deb
+sudo usermod -aG sockscope "$USER"
+```
+
+The collector package installs a systemd service that starts right away and
+serves `/run/sockscope.sock` to the `sockscope` group. Log out and back in
+after joining the group, then start sockscope from the applications menu. The
+viewer package bundles its own Java runtime.
+
+## Host names
+
+When systemd-resolved is running, the collector subscribes to its monitor
+interface and reads its cache on startup, so connections show the name the
+program actually looked up instead of a bare address. Programs that bypass
+resolved, for example with their own DNS over HTTPS, only show addresses. Use
+`-dns=false` to turn this off.
+
 ## Requirements
 
 - Linux 5.8 or newer with BTF (`/sys/kernel/btf/vmlinux` exists). WSL2 works.
@@ -51,6 +74,8 @@ sudo apt install clang llvm libbpf-dev bpftool golang-go openjdk-21-jdk
 
 ## Build
 
+From source:
+
 ```
 cd collector
 go generate ./...
@@ -58,6 +83,12 @@ go build -o sockscope-collector .
 
 cd ../app
 ./gradlew installDist
+```
+
+Packages, the same way the release is built:
+
+```
+packaging/build.sh 0.3.0
 ```
 
 ## Run
@@ -90,10 +121,8 @@ reconnects if the collector restarts.
 
 ## Next
 
-- Host names for remote addresses.
 - TCP retransmits per process.
 - Container and pod names instead of cgroup ids.
-- `.deb` and `.rpm` packages with a systemd unit for the collector.
 
 ## License
 
