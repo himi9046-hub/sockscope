@@ -30,6 +30,7 @@ func main() {
 	interval := flag.Duration("interval", time.Second, "how often to report")
 	socket := flag.String("socket", "", "serve samples on this unix socket instead of printing them")
 	group := flag.String("group", "", "group allowed to read the socket")
+	names := flag.Bool("dns", true, "report host names seen by systemd-resolved")
 	flag.Parse()
 	log.SetFlags(0)
 
@@ -114,6 +115,9 @@ func main() {
 	}
 	defer events.Close()
 	go readConns(events, publish)
+	if *names {
+		go watchDNS(resolvedMonitor, publish)
+	}
 
 	tracker := newTracker()
 	tick := time.NewTicker(*interval)
