@@ -121,3 +121,38 @@
     -fx-padding: 0;
     -fx-shape: "";
 }
+
+.toolbar {
+    -fx-padding: 8 20 6 20;
+}
+
+.check-box {
+    -fx-text-fill: -ink;
+}
+
+.check-box .box {
+    -fx-background-color: #1b1e22;
+    -fx-border-color: -line;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: -down;
+}
+
+.section {
+    -fx-padding: 10 20 6 20;
+    -fx-text-fill: -dim;
+    -fx-font-size: 11px;
+}
+
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.split-pane > .split-pane-divider {
+    -fx-background-color: -line;
+    -fx-padding: 0 0 1 0;
+}
