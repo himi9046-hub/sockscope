@@ -1,0 +1,123 @@
+.root {
+    -fx-font-family: "DejaVu Sans", "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-background-color: #121417;
+    -ink: #e4e1d9;
+    -dim: #858b93;
+    -line: #262a30;
+    -down: #e8a33d;
+    -up: #6cb8a4;
+}
+
+.label {
+    -fx-text-fill: -ink;
+}
+
+.dim {
+    -fx-text-fill: -dim;
+    -fx-font-size: 11px;
+}
+
+.header {
+    -fx-padding: 16 20 14 20;
+    -fx-border-color: transparent transparent -line transparent;
+}
+
+.title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.big {
+    -fx-font-family: "DejaVu Sans Mono", monospace;
+    -fx-font-size: 20px;
+}
+
+.big.down {
+    -fx-text-fill: -down;
+}
+
+.big.up {
+    -fx-text-fill: -up;
+}
+
+.status {
+    -fx-padding: 6 20 8 20;
+    -fx-text-fill: -dim;
+}
+
+.status:offline {
+    -fx-text-fill: -down;
+}
+
+.table-view {
+    -fx-background-color: transparent;
+    -fx-table-cell-border-color: -line;
+    -fx-padding: 0 12 0 12;
+}
+
+.table-view .column-header-background,
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: #121417;
+    -fx-border-color: transparent transparent -line transparent;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -dim;
+    -fx-font-size: 11px;
+    -fx-font-weight: normal;
+}
+
+.table-row-cell {
+    -fx-background-color: #121417;
+    -fx-border-color: transparent transparent -line transparent;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #1b1e22;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #23272c;
+}
+
+.table-cell {
+    -fx-text-fill: -ink;
+    -fx-padding: 6 8 6 8;
+}
+
+.numeric .table-cell,
+.numeric.table-cell {
+    -fx-alignment: center-right;
+    -fx-font-family: "DejaVu Sans Mono", monospace;
+}
+
+.table-column.down .table-cell,
+.down.table-cell {
+    -fx-text-fill: -down;
+}
+
+.table-column.up .table-cell,
+.up.table-cell {
+    -fx-text-fill: -up;
+}
+
+.table-view .placeholder .label {
+    -fx-text-fill: -dim;
+}
+
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: -line;
+    -fx-background-radius: 3;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-padding: 0;
+    -fx-shape: "";
+}
