@@ -41,6 +41,7 @@ public class App extends Application {
 
     private final ProcessTable table = new ProcessTable(60);
     private final ConnectionLog log = new ConnectionLog(500);
+    private final HostNames names = new HostNames(10_000);
     private final ObservableList<ProcessTable.Row> rows = FXCollections.observableArrayList();
     private final ObservableList<ConnectionLog.Entry> conns = FXCollections.observableArrayList();
     private final TableView<ProcessTable.Row> procView = new TableView<>(rows);
@@ -73,7 +74,8 @@ public class App extends Application {
         connView.getColumns().add(column("Time", 80, e -> CLOCK.format(Instant.ofEpochSecond(e.time())), false));
         connView.getColumns().add(column("Process", 140, ConnectionLog.Entry::program, false));
         connView.getColumns().add(column("Dir", 50, e -> e.conn().dir(), false));
-        connView.getColumns().add(column("Remote", 240, e -> e.conn().remote() + ":" + e.conn().rport(), false));
+        connView.getColumns().add(column("Host", 200, e -> names.nameOf(e.conn().remote()), false));
+        connView.getColumns().add(column("Address", 200, e -> e.conn().remote() + ":" + e.conn().rport(), false));
         connView.getColumns().add(column("State", 70, e -> e.conn().closed() ? "closed" : "open", false));
         connView.getColumns().add(column("Time open", 90, e -> e.conn().closed() ? millis(e.conn().ms()) : "", true));
         connView.getColumns().add(column("Down", 90, e -> e.conn().closed() ? Bytes.format(e.conn().rx()) : "", true, "down"));
@@ -140,6 +142,11 @@ public class App extends Application {
     }
 
     private void show(Sample sample) {
+        if (sample.dns() != null) {
+            names.add(sample.dns());
+            connView.refresh();
+            return;
+        }
         if (sample.conn() != null) {
             log.add(sample.time(), sample.conn());
             refreshConnections();

@@ -14,7 +14,7 @@ class ProcessTableTest {
     }
 
     private static Sample sample(long time, Proc... procs) {
-        return new Sample(time, List.of(procs), null);
+        return new Sample(time, List.of(procs), null, null);
     }
 
     @Test

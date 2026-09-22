@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record Sample(@JsonProperty("t") long time, List<Proc> procs, Conn conn) {
+public record Sample(@JsonProperty("t") long time, List<Proc> procs, Conn conn, Dns dns) {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -26,6 +26,9 @@ public record Sample(@JsonProperty("t") long time, List<Proc> procs, Conn conn) 
             return "in".equals(dir);
         }
     }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Dns(String name, List<String> addrs) {}
 
     public static Sample parse(String line) throws IOException {
         return JSON.readValue(line, Sample.class);
