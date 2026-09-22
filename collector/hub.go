@@ -28,8 +28,8 @@ func (h *hub) serve(l net.Listener) {
 	}
 }
 
-func (h *hub) send(s sample) error {
-	line, err := json.Marshal(s)
+func (h *hub) send(v any) error {
+	line, err := json.Marshal(v)
 	if err != nil {
 		return err
 	}

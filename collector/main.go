@@ -1,10 +1,12 @@
 package main
 
 //go:generate sh -c "bpftool btf dump file /sys/kernel/btf/vmlinux format c > bpf/vmlinux.h"
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -target amd64 traffic bpf/traffic.bpf.c
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -target amd64 -type conn traffic bpf/traffic.bpf.c
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"flag"
 	"log"
@@ -14,11 +16,13 @@ import (
 	"os/user"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
+	"github.com/cilium/ebpf/ringbuf"
 	"github.com/cilium/ebpf/rlimit"
 )
 
@@ -65,6 +69,7 @@ func main() {
 		{"udpv6_sendmsg", objs.Udpv6Sendmsg, false},
 		{"udp_recvmsg", objs.UdpRecvmsg, true},
 		{"udpv6_recvmsg", objs.Udpv6Recvmsg, true},
+		{"inet_csk_accept", objs.InetCskAccept, true},
 	}
 	for _, p := range probes {
 		attach := link.Kprobe
@@ -81,15 +86,34 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	publish := json.NewEncoder(os.Stdout).Encode
+	tp, err := link.Tracepoint("sock", "inet_sock_set_state", objs.SockState, nil)
+	if err != nil {
+		log.Fatalf("attach inet_sock_set_state: %v", err)
+	}
+	defer tp.Close()
+
+	send := json.NewEncoder(os.Stdout).Encode
 	if *socket != "" {
 		h, err := listen(*socket, *group)
 		if err != nil {
 			log.Fatalf("socket: %v", err)
 		}
 		defer os.Remove(*socket)
-		publish = func(v any) error { return h.send(v.(sample)) }
+		send = h.send
 	}
+	var mu sync.Mutex
+	publish := func(v any) error {
+		mu.Lock()
+		defer mu.Unlock()
+		return send(v)
+	}
+
+	events, err := ringbuf.NewReader(objs.Conns)
+	if err != nil {
+		log.Fatalf("ring buffer: %v", err)
+	}
+	defer events.Close()
+	go readConns(events, publish)
 
 	tracker := newTracker()
 	tick := time.NewTicker(*interval)
@@ -111,6 +135,28 @@ func main() {
 			if err := publish(s); err != nil {
 				log.Fatalf("write: %v", err)
 			}
+		}
+	}
+}
+
+func readConns(r *ringbuf.Reader, publish func(any) error) {
+	var c trafficConn
+	for {
+		rec, err := r.Read()
+		if err != nil {
+			return
+		}
+		if err := binary.Read(bytes.NewReader(rec.RawSample), binary.LittleEndian, &c); err != nil {
+			log.Printf("bad conn event: %v", err)
+			continue
+		}
+		raw := rawConn{
+			Kind: c.Kind, Dir: c.Dir, Pid: c.Pid, Comm: cstr(c.Comm[:]), Cgroup: c.Cgroup, Family: c.Family,
+			Saddr: c.Saddr, Daddr: c.Daddr, Sport: c.Sport, Dport: c.Dport,
+			DurationNs: c.DurationNs, Rx: c.Rx, Tx: c.Tx,
+		}
+		if err := publish(describe(raw, time.Now())); err != nil {
+			log.Printf("write: %v", err)
 		}
 	}
 }
