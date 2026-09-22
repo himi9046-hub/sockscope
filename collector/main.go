@@ -8,8 +8,11 @@ import (
 	"encoding/json"
 	"flag"
 	"log"
+	"net"
 	"os"
 	"os/signal"
+	"os/user"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -21,6 +24,8 @@ import (
 
 func main() {
 	interval := flag.Duration("interval", time.Second, "how often to report")
+	socket := flag.String("socket", "", "serve samples on this unix socket instead of printing them")
+	group := flag.String("group", "", "group allowed to read the socket")
 	flag.Parse()
 	log.SetFlags(0)
 
@@ -76,7 +81,16 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	out := json.NewEncoder(os.Stdout)
+	publish := json.NewEncoder(os.Stdout).Encode
+	if *socket != "" {
+		h, err := listen(*socket, *group)
+		if err != nil {
+			log.Fatalf("socket: %v", err)
+		}
+		defer os.Remove(*socket)
+		publish = func(v any) error { return h.send(v.(sample)) }
+	}
+
 	tracker := newTracker()
 	tick := time.NewTicker(*interval)
 	defer tick.Stop()
@@ -94,11 +108,35 @@ func main() {
 			for _, pid := range gone {
 				objs.Usage.Delete(pid)
 			}
-			if err := out.Encode(s); err != nil {
+			if err := publish(s); err != nil {
 				log.Fatalf("write: %v", err)
 			}
 		}
 	}
+}
+
+func listen(path, group string) (*hub, error) {
+	os.Remove(path)
+	l, err := net.Listen("unix", path)
+	if err != nil {
+		return nil, err
+	}
+	if err := os.Chmod(path, 0o660); err != nil {
+		return nil, err
+	}
+	if group != "" {
+		g, err := user.LookupGroup(group)
+		if err != nil {
+			return nil, err
+		}
+		gid, _ := strconv.Atoi(g.Gid)
+		if err := os.Chown(path, -1, gid); err != nil {
+			return nil, err
+		}
+	}
+	h := newHub()
+	go h.serve(l)
+	return h, nil
 }
 
 func readUsage(m *ebpf.Map) (map[uint32]counters, error) {
