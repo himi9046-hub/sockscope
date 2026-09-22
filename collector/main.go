@@ -1,6 +1,6 @@
 package main
 
-//go:generate sh -c "bpftool btf dump file /sys/kernel/btf/vmlinux format c > bpf/vmlinux.h"
+//go:generate sh -c "${BPFTOOL:-bpftool} btf dump file /sys/kernel/btf/vmlinux format c > bpf/vmlinux.h"
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -target amd64 -type conn traffic bpf/traffic.bpf.c
 
 import (

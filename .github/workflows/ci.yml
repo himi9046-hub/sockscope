@@ -16,7 +16,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: collector/go.mod
-      - run: sudo apt-get update && sudo apt-get install -y clang llvm libbpf-dev linux-tools-common "linux-tools-$(uname -r)"
+      - run: sudo apt-get update && sudo apt-get install -y clang llvm libbpf-dev linux-tools-generic
+      - run: echo "BPFTOOL=$(ls /usr/lib/linux-tools/*/bpftool | head -1)" >> "$GITHUB_ENV"
       - run: go generate ./...
       - run: go vet ./...
       - run: go test ./...
