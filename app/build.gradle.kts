@@ -10,9 +10,9 @@ val javafx = "21.0.8"
 val platform = "linux"
 
 dependencies {
-    implementation("org.openjfx:javafx-base:$javafx:$platform")
-    implementation("org.openjfx:javafx-graphics:$javafx:$platform")
-    implementation("org.openjfx:javafx-controls:$javafx:$platform")
+    for (module in listOf("base", "graphics", "controls")) {
+        implementation("org.openjfx:javafx-$module:$javafx:$platform") { isTransitive = false }
+    }
     implementation("com.fasterxml.jackson.core:jackson-databind:2.19.2")
 
     testImplementation(platform("org.junit:junit-bom:5.12.2"))

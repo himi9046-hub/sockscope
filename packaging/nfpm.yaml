@@ -1,0 +1,21 @@
+name: sockscope-collector
+arch: amd64
+platform: linux
+version: ${VERSION}
+maintainer: himi <270933868+himi9046-hub@users.noreply.github.com>
+description: Counts network traffic per process with eBPF and serves it on a Unix socket.
+homepage: https://github.com/himi9046-hub/sockscope
+license: MIT
+contents:
+  - src: collector/sockscope-collector
+    dst: /usr/bin/sockscope-collector
+    file_info:
+      mode: 0755
+  - src: packaging/sockscope-collector.service
+    dst: /usr/lib/systemd/system/sockscope-collector.service
+    file_info:
+      mode: 0644
+scripts:
+  postinstall: packaging/postinstall.sh
+  preremove: packaging/preremove.sh
+  postremove: packaging/postremove.sh

@@ -4,3 +4,4 @@ collector/*_bpfel.o
 collector/sockscope-collector
 app/build/
 app/.gradle/
+dist/

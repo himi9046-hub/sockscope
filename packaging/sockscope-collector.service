@@ -1,0 +1,16 @@
+[Unit]
+Description=sockscope collector
+Documentation=https://github.com/himi9046-hub/sockscope
+After=systemd-resolved.service
+
+[Service]
+ExecStart=/usr/bin/sockscope-collector -socket /run/sockscope.sock -group sockscope
+Restart=on-failure
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/run
+
+[Install]
+WantedBy=multi-user.target
