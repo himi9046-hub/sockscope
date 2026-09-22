@@ -74,6 +74,36 @@ func TestDisconnectedClientsAreDropped(t *testing.T) {
 	})
 }
 
+func TestLateClientsGetKnownHostNames(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "s.sock")
+	l, err := net.Listen("unix", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer l.Close()
+
+	h := newHub()
+	go h.serve(l)
+	h.send(dnsMessage{Time: 1, DNS: dnsInfo{Name: "github.com", Addrs: []string{"140.82.121.4"}}})
+	h.send(sample{Time: 2, Procs: []proc{}})
+
+	c, err := net.Dial("unix", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	c.SetReadDeadline(time.Now().Add(2 * time.Second))
+
+	line, err := bufio.NewReader(c).ReadString('\n')
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got dnsMessage
+	if err := json.Unmarshal([]byte(line), &got); err != nil || got.DNS.Name != "github.com" {
+		t.Fatalf("first line %q (%v)", line, err)
+	}
+}
+
 func waitFor(t *testing.T, ok func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(2 * time.Second)

@@ -7,9 +7,12 @@ import (
 	"time"
 )
 
+const replayLimit = 4096
+
 type hub struct {
 	mu      sync.Mutex
 	clients map[net.Conn]struct{}
+	replay  [][]byte
 }
 
 func newHub() *hub {
@@ -24,6 +27,9 @@ func (h *hub) serve(l net.Listener) {
 		}
 		h.mu.Lock()
 		h.clients[c] = struct{}{}
+		for _, line := range h.replay {
+			h.write(c, line)
+		}
 		h.mu.Unlock()
 	}
 }
@@ -37,14 +43,24 @@ func (h *hub) send(v any) error {
 
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	for c := range h.clients {
-		c.SetWriteDeadline(time.Now().Add(500 * time.Millisecond))
-		if _, err := c.Write(line); err != nil {
-			c.Close()
-			delete(h.clients, c)
+	if _, ok := v.(dnsMessage); ok {
+		if len(h.replay) == replayLimit {
+			h.replay = h.replay[1:]
 		}
+		h.replay = append(h.replay, line)
+	}
+	for c := range h.clients {
+		h.write(c, line)
 	}
 	return nil
+}
+
+func (h *hub) write(c net.Conn, line []byte) {
+	c.SetWriteDeadline(time.Now().Add(500 * time.Millisecond))
+	if _, err := c.Write(line); err != nil {
+		c.Close()
+		delete(h.clients, c)
+	}
 }
 
 func (h *hub) count() int {
