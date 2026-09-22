@@ -7,6 +7,8 @@ and adds up bytes per process. It also reports every TCP connection as it opens
 and closes. A JavaFX window shows who is downloading and uploading right now,
 a one-minute graph, and the connections of the program you pick.
 
+![sockscope showing traffic per program and a list of TCP connections](docs/screenshot.png)
+
 ## How it works
 
 - kprobes on `tcp_sendmsg`, `tcp_cleanup_rbuf`, `udp_sendmsg`, `udp_recvmsg`
