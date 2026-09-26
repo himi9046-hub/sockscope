@@ -5,7 +5,8 @@ Live network traffic per process on Linux, counted in the kernel with eBPF.
 A small collector attaches to the kernel's TCP and UDP send and receive paths
 and adds up bytes per process. It also reports every TCP connection as it opens
 and closes. A JavaFX window shows who is downloading and uploading right now,
-a one-minute graph, and the connections of the program you pick.
+a one-minute graph, and the connections of the program you pick. I made it
+after Leash, my Windows tool, because I wanted the same view on Linux.
 
 ![sockscope showing traffic per program and a list of TCP connections](docs/screenshot.png)
 
@@ -38,7 +39,8 @@ Connections arrive as separate lines:
 
 ## Install
 
-Packages for Debian, Ubuntu and Fedora are on the
+Packages for Debian and Ubuntu (`.deb`) and an `.rpm` that has not been tried
+on Fedora yet are on the
 [releases page](https://github.com/himi9046-hub/sockscope/releases).
 
 ```
@@ -105,6 +107,8 @@ Or serve them on a socket and open the viewer:
 sudo ./collector/sockscope-collector -socket /run/sockscope.sock -group "$(id -gn)" &
 app/build/install/sockscope/bin/sockscope
 ```
+
+`-interval 5s` reports every five seconds instead of every second.
 
 The socket is readable by root and the given group. The viewer looks for
 `/run/sockscope.sock` unless `SOCKSCOPE_SOCKET` points somewhere else, and
